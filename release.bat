@@ -1,3 +1,4 @@
+copy /b build.rs +,,
 cargo build --release
 @del compiled\nimbus-bn2-tweaks\win_x64\nimbus-bn2-tweaks.xpl
 @copy target\release\nimbus_bn2_tweaks.dll compiled\nimbus-bn2-tweaks\win_x64\nimbus-bn2-tweaks.xpl
