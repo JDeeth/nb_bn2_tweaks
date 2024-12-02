@@ -20,15 +20,21 @@ It provides the following commands to facilitate hardware integration:
 - Pitot heat controls
 - Ice protection controls
 - Starter isolation switch
+- Mac/Linux binary if there's demand for it
 
 ## Installation (Windows)
 
-Copy the `nimbus-bn2-tweaks` folder from `compiled` to your Islander `plugins` folder
+Download the latest [Release](https://github.com/JDeeth/nb_bn2_tweaks/releases)
 
-To confirm it's running, load the aircraft and open Plugins > Show Plugin Admin.
-The compilation date will be shown under Information > Nimbus BN2 Tweaks
+Copy the `nimbus-bn2-tweaks` folder into the Islander's `Plugins` folder
+
+To confirm the plugin is running, load the aircraft and open Plugins > Show Plugin Admin.
+The compilation date will be shown under Information > Nimbus BN2 Tweaks and the additional
+commands should be visible in the control config.
 
 ## Build instructions
+
+To build from source (and for Mac/Linux), clone this repo on a computer with Rust installed:
 
 ```
 cargo build --release
