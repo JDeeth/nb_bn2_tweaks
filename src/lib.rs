@@ -1,4 +1,4 @@
-use dataref_command::{push_command, toggle_switch};
+use dataref_command::{push_command, ToggleSwitch};
 use xplm::{
     command::OwnedCommand,
     debugln,
@@ -13,7 +13,8 @@ extern crate xplm;
 struct NimbusBN2Tweaks {
     _flap_up: OwnedCommand,
     _flap_down: OwnedCommand,
-    _mag_switches: [(OwnedCommand, OwnedCommand); 4],
+    _mag_switches: [ToggleSwitch; 4],
+    _fuel_pump_switches: [ToggleSwitch; 2],
 }
 
 impl NimbusBN2Tweaks {
@@ -30,25 +31,37 @@ impl NimbusBN2Tweaks {
                 "Push flaps switch to Down position",
             ),
             _mag_switches: [
-                toggle_switch(
+                ToggleSwitch::new(
                     "nimbus/bn2/animation/value_left_mag1",
                     "jdeeth/nb_bn2_tweaks/mag_left_1",
                     "Magneto Left 1",
                 ),
-                toggle_switch(
+                ToggleSwitch::new(
                     "nimbus/bn2/animation/value_left_mag2",
                     "jdeeth/nb_bn2_tweaks/mag_left_2",
                     "Magneto Left 2",
                 ),
-                toggle_switch(
+                ToggleSwitch::new(
                     "nimbus/bn2/animation/value_right_mag1",
                     "jdeeth/nb_bn2_tweaks/mag_right_1",
                     "Magneto Right 1",
                 ),
-                toggle_switch(
+                ToggleSwitch::new(
                     "nimbus/bn2/animation/value_right_mag2",
                     "jdeeth/nb_bn2_tweaks/mag_right_2",
                     "Magneto Right 2",
+                ),
+            ],
+            _fuel_pump_switches: [
+                ToggleSwitch::new(
+                    "nimbus/bn2/animation/value_aux_fuel_left",
+                    "jdeeth/nb_bn2_tweaks/fuel_pump_left",
+                    "Fuel Pump Left",
+                ),
+                ToggleSwitch::new(
+                    "nimbus/bn2/animation/value_aux_fuel_right",
+                    "jdeeth/nb_bn2_tweaks/fuel_pump_right",
+                    "Fuel Pump Right",
                 ),
             ],
         }

@@ -1,30 +1,63 @@
+use std::{cell::RefCell, rc::Rc};
+
+use replace_with::replace_with_or_abort;
 use xplm::{
     command::{CommandHandler, OwnedCommand},
-    data::{borrowed::DataRef, DataReadWrite as _, ReadWrite},
+    data::{borrowed::DataRef, DataRead, DataReadWrite, ReadWrite},
     debugln,
 };
 
+/// Dataref owned by another aircraft plugin
+/// (May not be loaded when our plugin runs)
+enum ThirdPartyDataref {
+    NotFound(String),
+    Found(DataRef<u32, ReadWrite>),
+}
+
+impl ThirdPartyDataref {
+    pub fn new(dataref_name: String) -> Self {
+        Self::NotFound(dataref_name)
+    }
+
+    fn find(&mut self) {
+        replace_with_or_abort(self, |self_| {
+            if let ThirdPartyDataref::NotFound(ref dataref_name) = self_ {
+                if let Ok(dr) = DataRef::<u32>::find(dataref_name) {
+                    if let Ok(writable_dr) = dr.writeable() {
+                        return Self::Found(writable_dr);
+                    }
+                }
+            };
+            self_
+        });
+    }
+
+    pub fn get(&mut self) -> Option<u32> {
+        self.find();
+        match self {
+            ThirdPartyDataref::NotFound(_) => None,
+            ThirdPartyDataref::Found(data_ref) => Some(data_ref.get()),
+        }
+    }
+
+    pub fn set(&mut self, pos: u32) {
+        self.find();
+        match self {
+            ThirdPartyDataref::NotFound(_) => (),
+            ThirdPartyDataref::Found(ref mut data_ref) => data_ref.set(pos),
+        };
+    }
+}
+
 struct SetDataRefCommand {
-    dataref_name: String,
-    dataref: Option<DataRef<u32, ReadWrite>>,
+    dataref: Rc<RefCell<ThirdPartyDataref>>,
     set_to: u32,
     reset_to: Option<u32>,
 }
 
 impl SetDataRefCommand {
-    fn set(&mut self, pos: u32) {
-        if self.dataref.is_none() {
-            if let Ok(dataref) = DataRef::find(&self.dataref_name) {
-                self.dataref = dataref.writeable().ok()
-            }
-        }
-        if let Some(dataref) = self.dataref.as_mut() {
-            dataref.set(pos);
-        }
-    }
-
-    fn make(
-        dataref_name: &str,
+    fn make_command(
+        dataref: Rc<RefCell<ThirdPartyDataref>>,
         command_name: &str,
         command_description: &str,
         set_to: u32,
@@ -35,8 +68,7 @@ impl SetDataRefCommand {
             command_name,
             command_description,
             Self {
-                dataref_name: dataref_name.to_string(),
-                dataref: None,
+                dataref,
                 set_to,
                 reset_to,
             },
@@ -47,12 +79,12 @@ impl SetDataRefCommand {
 
 impl CommandHandler for SetDataRefCommand {
     fn command_begin(&mut self) {
-        self.set(self.set_to);
+        self.dataref.borrow_mut().set(self.set_to);
     }
     fn command_continue(&mut self) {}
     fn command_end(&mut self) {
         if let Some(reset) = self.reset_to {
-            self.set(reset);
+            self.dataref.borrow_mut().set(reset);
         }
     }
 }
@@ -62,28 +94,79 @@ pub fn push_command(
     command_name: &str,
     command_description: &str,
 ) -> OwnedCommand {
-    SetDataRefCommand::make(dataref_name, command_name, command_description, 1, Some(0))
+    SetDataRefCommand::make_command(
+        Rc::new(RefCell::new(ThirdPartyDataref::new(
+            dataref_name.to_owned(),
+        ))),
+        command_name,
+        command_description,
+        1,
+        Some(0),
+    )
 }
 
-pub fn toggle_switch(
-    dataref_name: &str,
-    command_prefix: &str,
-    switch_name: &str,
-) -> (OwnedCommand, OwnedCommand) {
-    (
-        SetDataRefCommand::make(
-            dataref_name,
+struct ToggleAction {
+    dataref: Rc<RefCell<ThirdPartyDataref>>,
+}
+
+impl ToggleAction {
+    pub fn make_command(
+        dataref: Rc<RefCell<ThirdPartyDataref>>,
+        command_name: &str,
+        command_description: &str,
+    ) -> OwnedCommand {
+        OwnedCommand::new(command_name, command_description, Self { dataref }).unwrap()
+    }
+}
+
+impl CommandHandler for ToggleAction {
+    fn command_begin(&mut self) {
+        let mut dataref = self.dataref.borrow_mut();
+        match dataref.get() {
+            Some(0) => dataref.set(1),
+            Some(_) => dataref.set(0),
+            None => (),
+        };
+    }
+    fn command_continue(&mut self) {}
+    fn command_end(&mut self) {}
+}
+pub struct ToggleSwitch {
+    _dataref: Rc<RefCell<ThirdPartyDataref>>,
+    _on: OwnedCommand,
+    _off: OwnedCommand,
+    _toggle: OwnedCommand,
+}
+
+impl ToggleSwitch {
+    pub fn new(dataref_name: &str, command_prefix: &str, switch_name: &str) -> Self {
+        let dataref = Rc::new(RefCell::new(ThirdPartyDataref::new(
+            dataref_name.to_owned(),
+        )));
+        let on = SetDataRefCommand::make_command(
+            Rc::clone(&dataref),
             &format!("{}_on", command_prefix),
             &format!("Set {} ON", switch_name),
             1,
             None,
-        ),
-        SetDataRefCommand::make(
-            dataref_name,
+        );
+        let off = SetDataRefCommand::make_command(
+            Rc::clone(&dataref),
             &format!("{}_off", command_prefix),
             &format!("Set {} OFF", switch_name),
             0,
             None,
-        ),
-    )
+        );
+        let toggle = ToggleAction::make_command(
+            Rc::clone(&dataref),
+            &format!("{}_toggle", command_prefix),
+            &format!("Toggle {} between OFF and ON", switch_name),
+        );
+        Self {
+            _dataref: dataref,
+            _on: on,
+            _off: off,
+            _toggle: toggle,
+        }
+    }
 }

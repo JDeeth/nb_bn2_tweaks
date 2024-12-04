@@ -4,18 +4,21 @@ This is a strictly unofficial Rust plugin for the Nimbus BN-2 Islander for X-Pla
 
 https://store.x-plane.org/BN-2B-Islander_p_1243.html
 
-It provides the following commands to facilitate hardware integration:
+It provides additional commands to facilitate hardware integration:
 
 ![Initial flap and magneto commands](img/initial_commands.png)
 
-### Flaps
-- `jdeeth/nb_bn2_tweaks/hold_flaps_switch_up` and `_down`
+## Implemented
 
-### Magnetos
-- `jdeeth/nb_bn2_tweaks/mag_left_1_up`/`_down` to `mag_right_2_up`/`_down`
+- Flaps
+- Magnetos
+- Fuel pumps
+
+Switches have On, Off, and Toggle commands
+
+The flaps switch is spring-loaded. Hold down the command to hold down the switch.
 
 ### Todo
-- Fuel pump switches
 - All the custom light switches
 - Pitot heat controls
 - Ice protection controls
