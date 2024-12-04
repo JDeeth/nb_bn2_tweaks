@@ -145,22 +145,22 @@ impl ToggleSwitch {
         )));
         let on = SetDataRefCommand::make_command(
             Rc::clone(&dataref),
-            &format!("{}_on", command_prefix),
-            &format!("Set {} ON", switch_name),
+            &format!("{command_prefix}_on"),
+            &format!("{switch_name}: set ON"),
             1,
             None,
         );
         let off = SetDataRefCommand::make_command(
             Rc::clone(&dataref),
-            &format!("{}_off", command_prefix),
-            &format!("Set {} OFF", switch_name),
+            &format!("{command_prefix}_off"),
+            &format!("{switch_name}: set OFF"),
             0,
             None,
         );
         let toggle = ToggleAction::make_command(
             Rc::clone(&dataref),
-            &format!("{}_toggle", command_prefix),
-            &format!("Toggle {} between OFF and ON", switch_name),
+            &format!("{command_prefix}_toggle" ),
+            &format!("{switch_name}: toggle"),
         );
         Self {
             _dataref: dataref,
