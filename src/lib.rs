@@ -1,12 +1,18 @@
+use anim_dataref::AnimDataref;
 use dataref_command::{push_command, ToggleSwitch};
+use update_loop::UpdateLoopHandler;
 use xplm::{
     command::OwnedCommand,
     debugln,
+    flight_loop::FlightLoop,
     plugin::{Plugin, PluginInfo},
     xplane_plugin,
 };
 
+mod anim_dataref;
 mod dataref_command;
+mod third_party_dataref;
+mod update_loop;
 
 extern crate xplm;
 
@@ -14,10 +20,26 @@ struct NimbusBN2Tweaks {
     _flap_up: OwnedCommand,
     _flap_down: OwnedCommand,
     _switches: [ToggleSwitch; 19],
+    _update_loop: FlightLoop,
 }
 
 impl NimbusBN2Tweaks {
     fn new() -> NimbusBN2Tweaks {
+        let _switch_anim = [
+            AnimDataref::new(
+                "nimbus/bn2/animation/value_aux_fuel_left".to_owned(),
+                "nimbus/bn2/animation/anim_aux_fuel_left",
+                10.0,
+            ),
+            AnimDataref::new(
+                "nimbus/bn2/animation/value_aux_fuel_right".to_owned(),
+                "nimbus/bn2/animation/anim_aux_fuel_right",
+                10.0,
+            ),
+        ];
+        let update_loop =
+            UpdateLoopHandler::new(_switch_anim.into_iter().map(|x| Box::new(x) as _).collect());
+
         NimbusBN2Tweaks {
             _flap_up: push_command(
                 "nimbus/bn2/wings/flaps_request_up",
@@ -129,7 +151,8 @@ impl NimbusBN2Tweaks {
                     "jdeeth/nb_bn2_tweaks/airframe/pitot_stall_heater",
                     "Pitot and Stall Warning Heaters",
                 ),
-            ]
+            ],
+            _update_loop: update_loop.into_flightloop(),
         }
     }
 }

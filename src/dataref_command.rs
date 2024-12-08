@@ -1,53 +1,11 @@
 use std::{cell::RefCell, rc::Rc};
 
-use replace_with::replace_with_or_abort;
 use xplm::{
     command::{CommandHandler, OwnedCommand},
-    data::{borrowed::DataRef, DataRead, DataReadWrite, ReadWrite},
     debugln,
 };
 
-/// Dataref owned by another aircraft plugin
-/// (May not be loaded when our plugin runs)
-enum ThirdPartyDataref {
-    NotFound(String),
-    Found(DataRef<u32, ReadWrite>),
-}
-
-impl ThirdPartyDataref {
-    pub fn new(dataref_name: String) -> Self {
-        Self::NotFound(dataref_name)
-    }
-
-    fn find(&mut self) {
-        replace_with_or_abort(self, |self_| {
-            if let ThirdPartyDataref::NotFound(ref dataref_name) = self_ {
-                if let Ok(dr) = DataRef::<u32>::find(dataref_name) {
-                    if let Ok(writable_dr) = dr.writeable() {
-                        return Self::Found(writable_dr);
-                    }
-                }
-            };
-            self_
-        });
-    }
-
-    pub fn get(&mut self) -> Option<u32> {
-        self.find();
-        match self {
-            ThirdPartyDataref::NotFound(_) => None,
-            ThirdPartyDataref::Found(data_ref) => Some(data_ref.get()),
-        }
-    }
-
-    pub fn set(&mut self, pos: u32) {
-        self.find();
-        match self {
-            ThirdPartyDataref::NotFound(_) => (),
-            ThirdPartyDataref::Found(ref mut data_ref) => data_ref.set(pos),
-        };
-    }
-}
+use crate::third_party_dataref::ThirdPartyDataref;
 
 struct SetDataRefCommand {
     dataref: Rc<RefCell<ThirdPartyDataref>>,
@@ -159,7 +117,7 @@ impl ToggleSwitch {
         );
         let toggle = ToggleAction::make_command(
             Rc::clone(&dataref),
-            &format!("{command_prefix}_toggle" ),
+            &format!("{command_prefix}_toggle"),
             &format!("{switch_name}: toggle"),
         );
         Self {

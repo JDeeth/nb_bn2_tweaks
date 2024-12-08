@@ -8,6 +8,13 @@ It provides additional commands to facilitate hardware integration:
 
 ![Commands listed in Keyboard settings](img/commands_mapping.png)
 
+It also provides animation datarefs for the fuel pump switches which are missing in v2.1.
+
+Most or all of this plugin will become redundant when Nimbus release v2.2, but it's useful
+for me to get more practice making Rust plugins... some of the stuff included here (the
+`ThirdPartyDataref` and `UpdateLoop` handlers) are hopefully gonna be useful in future
+projects with a little more work.
+
 ## Commands
 
 Switches have On, Off, and Toggle commands
@@ -33,6 +40,25 @@ Switches have On, Off, and Toggle commands
 - Generator switches
 - Battery switch
 - External Supply (starter isol) switch
+
+## Fuel pump switches
+
+In v2.1 of the Islander, the datarefs that animate the fuel pump switches were missing. The switches
+work in that you can click on them to turn the fuel pumps on and off, but they'd just always be
+drawn in the OFF position.
+
+This plugin adds those datarefs, with a smoothing mechanism so they move over 1/10th of a second or so.
+
+If you've modified `IslanderInterior_panel_ALB.obj` to use the `value_aux_fuel_x` datarefs,
+change it back to use `anim_aux_fuel_x` (or restore the backed-up file... you backed it up,
+right?).
+
+If you've got a separate script to update the `anim_aux_fuel_x` datarefs, you should remove it
+ - this plugin has the switches move over 0.1 seconds, rather than snap instantly, which in a
+small way makes the switch feel more real.
+
+The animation is over-engineered to take 0.1 in-game seconds rather than 0.1 real-world seconds, which
+means the switches don't move when the sim is paused, and move 4x as fast if you're running at 4x speed.
 
 ## Installation (Windows)
 
